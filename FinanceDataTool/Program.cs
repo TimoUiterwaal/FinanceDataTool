@@ -75,8 +75,9 @@ namespace FinanceDataTool
 
                 else if (string.Equals(input, "portfolio", StringComparison.OrdinalIgnoreCase) || string.Equals(input, "p", StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.WriteLine("Portfolio feature not implemented yet.");
-                    
+                    var currentportfolio = new Portfolio();
+
+                    currentportfolio.RunPortfolio();
                     continue;
                 }
 
