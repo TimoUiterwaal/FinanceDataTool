@@ -31,27 +31,14 @@ namespace FinanceDataTool
 
         }
 
-
         static async Task Main(string[] args)
         {
 
-
-            InitializeDB();
+            Database.InitializeDB();
             CheckForSecret();
             MarketStatusResponse Marketstatus = await WithSpinner(GetMarketStatus());
-
-
             Console.WriteLine("Welcome to the Finance Data Tool");
-
-
             Console.WriteLine("Market Status: " + (Marketstatus.isOpen ? "Open" : "Closed"));
-
-            //remove when done debugging
-            //Console.WriteLine("Time stamp from Market API CALL" + Marketstatus.Timestamp);
-
-            //long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            //Console.WriteLine("Time stamp from now " + now);
-
 
             var SPYIntroticker = new Stock
             {
@@ -77,10 +64,9 @@ namespace FinanceDataTool
                 {
                     var currentportfolio = new Portfolio();
 
-                    currentportfolio.RunPortfolio();
+                    await currentportfolio.RunPortfolio();
                     continue;
                 }
-
 
                 else if (string.Equals(input, "stock", StringComparison.OrdinalIgnoreCase) || string.Equals(input, "s", StringComparison.OrdinalIgnoreCase))
                 {
@@ -109,7 +95,6 @@ namespace FinanceDataTool
                     continue;
                 }
 
-
                 if (input is null)
                 {
                     Console.WriteLine("No value Input");
@@ -120,10 +105,6 @@ namespace FinanceDataTool
                     Console.WriteLine("Invalid Input");
                     continue;
                 }
-
-
-
-
             }
         }
 
@@ -131,25 +112,16 @@ namespace FinanceDataTool
         {
 
             try
-            { //TODO grab token from secret local vault
+            { 
                 string body = await client.GetStringAsync("stock/market-status?exchange=US&token=" + ApiKey);
                 var MarketStatusResponse = JsonSerializer.Deserialize<MarketStatusResponse>(body);
-                //Console.WriteLine(body);
-
                 using var connection = Database.CreateConnection();
 
                 var update = connection.CreateCommand();
-                update.CommandText = @"INSERT OR REPLACE INTO System
-                  (Id, LastTimestamp)
-                VALUES
-                  (1, $LastTimestamp)";
-
+                update.CommandText = "UPDATE System SET LastTimestamp = $LastTimestamp WHERE Id = 1";
                 update.Parameters.AddWithValue("$LastTimestamp", MarketStatusResponse.Timestamp);
-
                 update.ExecuteNonQuery();
-
                 return MarketStatusResponse;
-
             }
             catch (Exception)
             {
@@ -158,58 +130,7 @@ namespace FinanceDataTool
 
             }
 
-
         }
-
-        static void InitializeDB()
-        {
-            using var connection = Database.CreateConnection();
-
-            var pragma = connection.CreateCommand();
-            pragma.CommandText = "PRAGMA foreign_keys = ON;";
-            pragma.ExecuteNonQuery();
-
-            Console.Write("Initializing DB...");
-
-            var createTable = connection.CreateCommand();
-            createTable.CommandText =
-            @"CREATE TABLE IF NOT EXISTS Stocks (
-                Symbol TEXT PRIMARY KEY,
-                CurrentPrice REAL,
-                Change REAL,
-                PercentageChange REAL,
-                HighPrice REAL,
-                LowPrice REAL,
-                OpenPrice REAL,
-                PreviousClose REAL,
-                Timestamp INTEGER
-            )";
-            createTable.ExecuteNonQuery();
-            //to do create an update method for the database schema
-            var createTable2 = connection.CreateCommand();
-            createTable2.CommandText =
-            @"CREATE TABLE IF NOT EXISTS System (
-                Id INTEGER PRIMARY KEY,
-                LastUpdated INTEGER,
-                LastTimestamp INTEGER
-            )";
-
-            createTable2.ExecuteNonQuery();
-
-            var createTable3 = connection.CreateCommand();
-            createTable3.CommandText =
-            @"CREATE TABLE IF NOT EXISTS Portfolio (
-            Symbol TEXT NOT NULL,
-            Shares REAL NOT NULL,
-            AvgPurchasePrice REAL NOT NULL,
-            FOREIGN KEY (Symbol) REFERENCES Stocks(Symbol)
-            )";
-            createTable3.ExecuteNonQuery();
-
-            Console.WriteLine("Initializing DB Completed...");
-
-        }
-
         static void CheckForSecret()
         {
             if (Program.ApiKey is null)
@@ -221,7 +142,6 @@ namespace FinanceDataTool
 
             }
         }
-
         static async Task<T> WithSpinner<T>( Task<T> task)
         {
             string[] frames = { "!", "*"};

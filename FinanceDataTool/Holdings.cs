@@ -24,7 +24,9 @@ namespace FinanceDataTool
             using var connection = Database.CreateConnection();
 
             if (CheckifHoldingsExists(Symbol))
+
             {
+
                 Console.WriteLine($"Holding for {Symbol} already exists.");
                 return;
             }
@@ -33,7 +35,7 @@ namespace FinanceDataTool
                 await Userstock.UpdateStock(Symbol);
 
                 var insert = connection.CreateCommand();
-                insert.CommandText = "INSERT INTO Holdings (Symbol, Shares, AvgPurchasePrice) VALUES ($symbol, $shares, $avgPurchasePrice)";
+                insert.CommandText = "INSERT INTO Holding (Symbol, Shares, AvgPurchasePrice) VALUES ($symbol, $shares, $avgPurchasePrice)";
                 insert.Parameters.AddWithValue("$symbol", this.Symbol);
 
                 while (true)
@@ -65,7 +67,7 @@ namespace FinanceDataTool
         {
             using var connection = Database.CreateConnection();
             var select = connection.CreateCommand();
-            select.CommandText = "SELECT StockRecnum FROM Holdings WHERE Symbol = $symbol";
+            select.CommandText = "SELECT StockRecnum FROM Holding WHERE Symbol = $symbol";
             select.Parameters.AddWithValue("$symbol", this.Symbol);
             object result = select.ExecuteScalar();
             return result is not null;
@@ -77,7 +79,7 @@ namespace FinanceDataTool
 
             using var connection = Database.CreateConnection();
             var select = connection.CreateCommand();
-            select.CommandText = "SELECT StockRecnum, Symbol, Shares, AvgPurchasePrice FROM Holdings";
+            select.CommandText = "SELECT StockRecnum, Symbol, Shares, AvgPurchasePrice FROM Holding";
 
             using var reader = select.ExecuteReader();
             while (reader.Read())
