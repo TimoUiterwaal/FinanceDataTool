@@ -66,35 +66,69 @@ namespace FinanceDataTool
 
             Console.WriteLine("S&P 500 now: " + SPYIntroticker.CurrentPrice + " | " + SPYIntroticker.PercentageChange + "%");
 
+
+
+
             while (true)
             {
-                Console.WriteLine("Enter Ticker (or 'exit' to quite): ");
+                Console.WriteLine("Menu options - Stock (S) - Portfolio (P) - exit");
 
                 string input = Console.ReadLine();
+
 
                 if (string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase))
                     break;
 
-                if (input is null)
+                else if (string.Equals(input, "portfolio", StringComparison.OrdinalIgnoreCase) || string.Equals(input, "p", StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.WriteLine("Invalid Input");
+                    Console.WriteLine("Portfolio feature not implemented yet.");
+                    
                     continue;
                 }
-                
 
-                var currentticker = new Stock
+
+                else if (string.Equals(input, "stock", StringComparison.OrdinalIgnoreCase) || string.Equals(input, "s", StringComparison.OrdinalIgnoreCase))
                 {
-                    Symbol = input.ToUpper()
-                };
-                //Console.WriteLine(currentticker.Symbol);
-                Console.WriteLine("--------------------------------------------------------------------------------------------------------");
+                    Console.WriteLine("Enter Ticker (or 'exit' to quit): ");
+                    string stocksymbolinput = Console.ReadLine();
 
-                await  WithSpinner(currentticker.UpdateStock(currentticker.Symbol));
+                    if (stocksymbolinput is null)
+                    {
+                        Console.WriteLine("Invalid Input");
+                        continue;
+                    }
 
-                if(currentticker.CurrentPrice != 0)
-                { 
-                    Console.WriteLine(currentticker.Symbol + " now: " + currentticker.CurrentPrice + " | " + currentticker.PercentageChange + "%"); 
+                    var currentticker = new Stock
+                    {
+                        Symbol = stocksymbolinput.ToUpper()
+                    };
+                    //Console.WriteLine(currentticker.Symbol);
+                    Console.WriteLine("--------------------------------------------------------------------------------------------------------");
+
+                    await WithSpinner(currentticker.UpdateStock(currentticker.Symbol));
+
+                    if (currentticker.CurrentPrice != 0)
+                    {
+                        Console.WriteLine(currentticker.Symbol + " now: " + currentticker.CurrentPrice + " | " + currentticker.PercentageChange + "%");
+                    }
+                    continue;
                 }
+
+
+                if (input is null)
+                {
+                    Console.WriteLine("No value Input");
+                    continue;
+                }
+                else
+                {
+                                       Console.WriteLine("Invalid Input");
+                    continue;
+                }
+
+
+
+
             }
         }
 

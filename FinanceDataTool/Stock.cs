@@ -95,12 +95,12 @@ namespace FinanceDataTool
                     return false;
                 }
 
-            }
-                catch (Exception)
+                }
+            catch (HttpRequestException ex)
                 {
+                Console.WriteLine($"Request for '{Symbol}' failed: {(int?)ex.StatusCode} {ex.StatusCode}");
 
-                        throw;
-
+                return false;
                 }
 
 
