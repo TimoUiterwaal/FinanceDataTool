@@ -61,13 +61,7 @@ namespace FinanceDataTool
 
             await WithSpinner(SPYIntroticker.UpdateStock(SPYIntroticker.Symbol));
 
-
-
-
             Console.WriteLine("S&P 500 now: " + SPYIntroticker.CurrentPrice + " | " + SPYIntroticker.PercentageChange + "%");
-
-
-
 
             while (true)
             {
@@ -122,7 +116,7 @@ namespace FinanceDataTool
                 }
                 else
                 {
-                                       Console.WriteLine("Invalid Input");
+                    Console.WriteLine("Invalid Input");
                     continue;
                 }
 
@@ -141,8 +135,7 @@ namespace FinanceDataTool
                 var MarketStatusResponse = JsonSerializer.Deserialize<MarketStatusResponse>(body);
                 //Console.WriteLine(body);
 
-                using var connection = new SqliteConnection("Data Source=stocks.db");
-                connection.Open();
+                using var connection = Database.CreateConnection();
 
                 var update = connection.CreateCommand();
                 update.CommandText = @"INSERT OR REPLACE INTO System
@@ -169,8 +162,11 @@ namespace FinanceDataTool
 
         static void InitializeDB()
         {
-            using var connection = new SqliteConnection("Data Source=stocks.db");
-            connection.Open();
+            using var connection = Database.CreateConnection();
+
+            var pragma = connection.CreateCommand();
+            pragma.CommandText = "PRAGMA foreign_keys = ON;";
+            pragma.ExecuteNonQuery();
 
             Console.Write("Initializing DB...");
 
@@ -196,9 +192,21 @@ namespace FinanceDataTool
                 LastUpdated INTEGER,
                 LastTimestamp INTEGER
             )";
-            Console.WriteLine("Initializing DB Completed...");
 
             createTable2.ExecuteNonQuery();
+
+            var createTable3 = connection.CreateCommand();
+            createTable3.CommandText =
+            @"CREATE TABLE IF NOT EXISTS Portfolio (
+            Symbol TEXT NOT NULL,
+            Shares REAL NOT NULL,
+            AvgPurchasePrice REAL NOT NULL,
+            FOREIGN KEY (Symbol) REFERENCES Stocks(Symbol)
+            )";
+            createTable3.ExecuteNonQuery();
+
+            Console.WriteLine("Initializing DB Completed...");
+
         }
 
         static void CheckForSecret()
@@ -221,7 +229,7 @@ namespace FinanceDataTool
             while (!task.IsCompleted)
             {
                 Console.Write($"\r{frames[i++ % frames.Length]}");
-                await Task.Delay(80);
+                await Task.Delay(120);
             }
 
             Console.Write($"\r"); // clear the line

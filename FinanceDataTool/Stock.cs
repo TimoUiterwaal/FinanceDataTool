@@ -43,8 +43,7 @@ namespace FinanceDataTool
         public async Task<bool> UpdateStock(String Symbol)
         {
             //Check if the timestamp in DB needs to be updated
-            using var connection = new SqliteConnection("Data Source=stocks.db");
-            connection.Open();
+            using var connection = Database.CreateConnection();
 
             var select = connection.CreateCommand();
             select.CommandText = "SELECT Timestamp FROM Stocks WHERE Symbol = $symbol";
@@ -130,9 +129,7 @@ namespace FinanceDataTool
         {
             this.Symbol = Symbol;
 
-            using var connection = new SqliteConnection("Data Source=stocks.db");
-            connection.Open();
-
+            using var connection = Database.CreateConnection();
             var selectnew = connection.CreateCommand();
 
             selectnew.CommandText = "SELECT * FROM Stocks WHERE Symbol = $symbol";
