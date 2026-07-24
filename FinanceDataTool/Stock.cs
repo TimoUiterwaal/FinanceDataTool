@@ -70,7 +70,7 @@ namespace FinanceDataTool
 
             try
                 {
-                    string body = await Program.client.GetStringAsync("quote?symbol=" + Symbol + "&token=d9h1s61r01qhv00ke2m0d9h1s61r01qhv00ke2mg");
+                    string body = await Program.client.GetStringAsync("quote?symbol=" + Symbol + "&token=" + Program.ApiKey);
                     var quote = JsonSerializer.Deserialize<QuoteResponse>(body);
                 
                     this.CurrentPrice = quote.CurrentPrice ?? 0;
