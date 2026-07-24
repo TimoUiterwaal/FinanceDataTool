@@ -1,0 +1,200 @@
+﻿using System;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Configuration;
+
+namespace FinanceDataTool
+{
+    internal class Program
+    {
+        public static readonly HttpClient client = new()
+        {
+            BaseAddress = new Uri("https://finnhub.io/api/v1/"),
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+
+        public static IConfiguration Configuration = new ConfigurationBuilder().AddUserSecrets<Program>().Build();
+
+        public static readonly string ApiKey = Configuration["Finnhub:ApiKey"];
+
+        public class MarketStatusResponse
+        {
+            [JsonPropertyName("exchange")] public string exchange { get; set; }
+            [JsonPropertyName("holiday")] public string holiday { get; set; }
+            [JsonPropertyName("isOpen")] public bool isOpen { get; set; }
+            [JsonPropertyName("session")] public string session { get; set; }
+            [JsonPropertyName("t")] public long Timestamp { get; set; }
+            [JsonPropertyName("timezone")] public string timezone { get; set; }
+
+        }
+
+
+        static async Task Main(string[] args)
+        {
+
+
+            InitializeDB();
+            CheckForSecret();
+            MarketStatusResponse Marketstatus = await WithSpinner(GetMarketStatus());
+
+
+            Console.WriteLine("Welcome to the Finance Data Tool");
+
+
+            Console.WriteLine("Market Status: " + (Marketstatus.isOpen ? "Open" : "Closed"));
+
+            //remove when done debugging
+            //Console.WriteLine("Time stamp from Market API CALL" + Marketstatus.Timestamp);
+
+            //long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            //Console.WriteLine("Time stamp from now " + now);
+
+
+            var SPYIntroticker = new Stock
+            {
+                Symbol = "SPY"
+
+            };
+
+            await WithSpinner(SPYIntroticker.UpdateStock(SPYIntroticker.Symbol));
+
+
+
+
+            Console.WriteLine("S&P 500 now: " + SPYIntroticker.CurrentPrice + " | " + SPYIntroticker.PercentageChange + "%");
+
+            while (true)
+            {
+                Console.WriteLine("Enter Ticker (or 'exit' to quite): ");
+
+                string input = Console.ReadLine();
+
+                if (string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase))
+                    break;
+
+                if (input is null)
+                {
+                    Console.WriteLine("Invalid Input");
+                    continue;
+                }
+                
+
+                var currentticker = new Stock
+                {
+                    Symbol = input.ToUpper()
+                };
+                //Console.WriteLine(currentticker.Symbol);
+                Console.WriteLine("--------------------------------------------------------------------------------------------------------");
+
+                await  WithSpinner(currentticker.UpdateStock(currentticker.Symbol));
+
+                if(currentticker.CurrentPrice != 0)
+                { 
+                    Console.WriteLine(currentticker.Symbol + " now: " + currentticker.CurrentPrice + " | " + currentticker.PercentageChange + "%"); 
+                }
+            }
+        }
+
+        static async Task<MarketStatusResponse> GetMarketStatus()
+        {
+
+            try
+            { //TODO grab token from secret local vault
+                string body = await client.GetStringAsync("stock/market-status?exchange=US&token=" + ApiKey);
+                var MarketStatusResponse = JsonSerializer.Deserialize<MarketStatusResponse>(body);
+                //Console.WriteLine(body);
+
+                using var connection = new SqliteConnection("Data Source=stocks.db");
+                connection.Open();
+
+                var update = connection.CreateCommand();
+                update.CommandText = @"INSERT OR REPLACE INTO System
+                  (Id, LastTimestamp)
+                VALUES
+                  (1, $LastTimestamp)";
+
+                update.Parameters.AddWithValue("$LastTimestamp", MarketStatusResponse.Timestamp);
+
+                update.ExecuteNonQuery();
+
+                return MarketStatusResponse;
+
+            }
+            catch (Exception)
+            {
+
+                throw;
+
+            }
+
+
+        }
+
+        static void InitializeDB()
+        {
+            using var connection = new SqliteConnection("Data Source=stocks.db");
+            connection.Open();
+
+            Console.Write("Initializing DB...");
+
+            var createTable = connection.CreateCommand();
+            createTable.CommandText =
+            @"CREATE TABLE IF NOT EXISTS Stocks (
+                Symbol TEXT PRIMARY KEY,
+                CurrentPrice REAL,
+                Change REAL,
+                PercentageChange REAL,
+                HighPrice REAL,
+                LowPrice REAL,
+                OpenPrice REAL,
+                PreviousClose REAL,
+                Timestamp INTEGER
+            )";
+            createTable.ExecuteNonQuery();
+            //to do create an update method for the database schema
+            var createTable2 = connection.CreateCommand();
+            createTable2.CommandText =
+            @"CREATE TABLE IF NOT EXISTS System (
+                Id INTEGER PRIMARY KEY,
+                LastUpdated INTEGER,
+                LastTimestamp INTEGER
+            )";
+            Console.WriteLine("Initializing DB Completed...");
+
+            createTable2.ExecuteNonQuery();
+        }
+
+        static void CheckForSecret()
+        {
+            if (Program.ApiKey is null)
+            {
+                Console.WriteLine("API Key not found. Please set the Finnhub:ApiKey secret.");
+                Console.WriteLine("dotnet user-secrets set \"Finnhub:ApiKey\" \"ENTER SECRET HERE\"");
+                Environment.Exit(1);
+
+
+            }
+        }
+
+        static async Task<T> WithSpinner<T>( Task<T> task)
+        {
+            string[] frames = { "!", "*"};
+            int i = 0;
+
+            while (!task.IsCompleted)
+            {
+                Console.Write($"\r{frames[i++ % frames.Length]}");
+                await Task.Delay(80);
+            }
+
+            Console.Write($"\r"); // clear the line
+            return await task; // re-awaiting a completed task just returns its result (or rethrows its exception)
+        }
+    }
+
+
+}
+
