@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinanceDataTool
 {
@@ -21,9 +22,9 @@ namespace FinanceDataTool
             double userpurchaseprice;
             Stock Userstock = new Stock { Symbol = Symbol };
 
-            using var connection = Database.CreateConnection();
+            using var context = new FinanceContext();
 
-            if (CheckifHoldingsExists(Symbol))
+            if (CheckifHoldingsExists(context,Symbol))
 
             {
 
@@ -33,10 +34,6 @@ namespace FinanceDataTool
             else
             {
                 await Userstock.UpdateStock(Symbol);
-
-                var insert = connection.CreateCommand();
-                insert.CommandText = "INSERT INTO Holding (Symbol, Shares, AvgPurchasePrice) VALUES ($symbol, $shares, $avgPurchasePrice)";
-                insert.Parameters.AddWithValue("$symbol", this.Symbol);
 
                 while (true)
                 {
@@ -56,46 +53,24 @@ namespace FinanceDataTool
                 }
                 this.AvgPurchasePrice = userpurchaseprice;
 
-                insert.Parameters.AddWithValue("$shares", this.Shares);
-                insert.Parameters.AddWithValue("$avgPurchasePrice", this.AvgPurchasePrice);
+                // INSERT INTO Holding (Symbol, Shares, AvgPurchasePrice).
+                // StockRecnum is left at 0 so SQLite assigns the next rowid.
+                context.Holdings.Add(this);
 
-                insert.ExecuteNonQuery();
+                await context.SaveChangesAsync();
             }
         }
 
-        public bool CheckifHoldingsExists(String Symbol)
+        public bool CheckifHoldingsExists(FinanceContext context,String Symbol)
         {
-            using var connection = Database.CreateConnection();
-            var select = connection.CreateCommand();
-            select.CommandText = "SELECT StockRecnum FROM Holding WHERE Symbol = $symbol";
-            select.Parameters.AddWithValue("$symbol", this.Symbol);
-            object result = select.ExecuteScalar();
-            return result is not null;
+            return context.Holdings.Any(h => h.Symbol == this.Symbol);
         }
 
         public static List<Holding> GetAllUpdatedHoldings()
         {
-            var holdings = new List<Holding>();
+            using var context = new FinanceContext();
 
-            using var connection = Database.CreateConnection();
-            var select = connection.CreateCommand();
-            select.CommandText = "SELECT StockRecnum, Symbol, Shares, AvgPurchasePrice FROM Holding";
-
-            using var reader = select.ExecuteReader();
-            while (reader.Read())
-            {
-                var holding = new Holding
-                {
-                    Symbol = reader.GetString(reader.GetOrdinal("Symbol"))
-                };
-                holding.StockRecnum = reader.GetInt64(reader.GetOrdinal("StockRecnum"));
-                holding.Shares = reader.GetDouble(reader.GetOrdinal("Shares"));
-                holding.AvgPurchasePrice = reader.GetDouble(reader.GetOrdinal("AvgPurchasePrice"));
-
-                holdings.Add(holding);
-            }
-
-            return holdings;
+            return context.Holdings.ToList();
         }
     }
 }

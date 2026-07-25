@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace FinanceDataTool
@@ -115,12 +115,14 @@ namespace FinanceDataTool
             { 
                 string body = await client.GetStringAsync("stock/market-status?exchange=US&token=" + ApiKey);
                 var MarketStatusResponse = JsonSerializer.Deserialize<MarketStatusResponse>(body);
-                using var connection = Database.CreateConnection();
+                using var context = new FinanceContext();
 
-                var update = connection.CreateCommand();
-                update.CommandText = "UPDATE System SET LastTimestamp = $LastTimestamp WHERE Id = 1";
-                update.Parameters.AddWithValue("$LastTimestamp", MarketStatusResponse.Timestamp);
-                update.ExecuteNonQuery();
+                var systemInfo = context.SystemInfo.Find(1L);
+                if (systemInfo is not null)
+                {
+                    systemInfo.LastTimestamp = MarketStatusResponse.Timestamp;
+                    context.SaveChanges();
+                }
                 return MarketStatusResponse;
             }
             catch (Exception)
