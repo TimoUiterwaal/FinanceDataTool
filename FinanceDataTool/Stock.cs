@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
 
 public class QuoteResponse
@@ -43,13 +43,11 @@ namespace FinanceDataTool
         public async Task<bool> UpdateStock(String Symbol)
         {
             //Check if the timestamp in DB needs to be updated
-            using var connection = Database.CreateConnection();
+            using var context = new FinanceContext();
 
-            var select = connection.CreateCommand();
-            select.CommandText = "SELECT Timestamp FROM Stocks WHERE Symbol = $symbol";
-            select.Parameters.AddWithValue("$symbol", this.Symbol);
+            var existing = await context.Stocks.FindAsync(this.Symbol);
 
-            object result = select.ExecuteScalar();
+            object? result = existing?.Timestamp;
 
             //Console.WriteLine(result);
             if (result is not null)
@@ -71,7 +69,7 @@ namespace FinanceDataTool
                 {
                     string body = await Program.client.GetStringAsync("quote?symbol=" + Symbol + "&token=" + Program.ApiKey);
                     var quote = JsonSerializer.Deserialize<QuoteResponse>(body);
-                
+
                     this.CurrentPrice = quote.CurrentPrice ?? 0;
                     this.Change = quote.Change ?? 0;
                     this.PercentageChange = quote.PercentChange ?? 0;
@@ -103,23 +101,18 @@ namespace FinanceDataTool
                 }
 
 
-            var update = connection.CreateCommand();
-            update.CommandText = @"INSERT OR REPLACE INTO Stocks
-                  (Symbol, CurrentPrice, Change, PercentageChange, HighPrice, LowPrice, OpenPrice, PreviousClose, Timestamp)
-                VALUES
-                  ($symbol, $currentPrice, $change, $percentChange, $high, $low, $open, $previousClose, $timestamp)";
+            // INSERT OR REPLACE INTO Stocks: add the row if it is new, otherwise copy
+            // this object's values onto the tracked row and let EF issue the UPDATE.
+            if (existing is null)
+            {
+                context.Stocks.Add(this);
+            }
+            else
+            {
+                context.Entry(existing).CurrentValues.SetValues(this);
+            }
 
-            update.Parameters.AddWithValue("$symbol", this.Symbol);
-            update.Parameters.AddWithValue("$currentPrice", this.CurrentPrice);
-            update.Parameters.AddWithValue("$change", this.Change);
-            update.Parameters.AddWithValue("$percentChange", this.PercentageChange);
-            update.Parameters.AddWithValue("$high", this.HighPrice);
-            update.Parameters.AddWithValue("$low", this.LowPrice);
-            update.Parameters.AddWithValue("$open", this.OpenPrice);
-            update.Parameters.AddWithValue("$previousClose", this.PreviousClose);
-            update.Parameters.AddWithValue("$timestamp", this.Timestamp);
-
-            update.ExecuteNonQuery();
+            await context.SaveChangesAsync();
 
             return true;
 
@@ -129,26 +122,22 @@ namespace FinanceDataTool
         {
             this.Symbol = Symbol;
 
-            using var connection = Database.CreateConnection();
-            var selectnew = connection.CreateCommand();
+            using var context = new FinanceContext();
 
-            selectnew.CommandText = "SELECT * FROM Stocks WHERE Symbol = $symbol";
-            selectnew.Parameters.AddWithValue("$symbol", this.Symbol);
+            var stock = context.Stocks.Find(this.Symbol);
 
-            using var readernew = selectnew.ExecuteReader();
-
-            if (readernew.Read())  // moves to the first row; false if no matching row
+            if (stock is not null)  // null when no matching row
             {
-                this.CurrentPrice = readernew.IsDBNull(readernew.GetOrdinal("CurrentPrice")) ? null : readernew.GetDouble(readernew.GetOrdinal("CurrentPrice"));
-                this.Change = readernew.IsDBNull(readernew.GetOrdinal("Change")) ? null : readernew.GetDouble(readernew.GetOrdinal("Change"));
-                this.PercentageChange = readernew.IsDBNull(readernew.GetOrdinal("PercentageChange")) ? null : readernew.GetDouble(readernew.GetOrdinal("PercentageChange"));
-                this.HighPrice = readernew.IsDBNull(readernew.GetOrdinal("HighPrice")) ? null : readernew.GetDouble(readernew.GetOrdinal("HighPrice"));
-                this.LowPrice = readernew.IsDBNull(readernew.GetOrdinal("LowPrice")) ? null : readernew.GetDouble(readernew.GetOrdinal("LowPrice"));
-                this.OpenPrice = readernew.IsDBNull(readernew.GetOrdinal("OpenPrice")) ? null : readernew.GetDouble(readernew.GetOrdinal("OpenPrice"));
-                this.PreviousClose = readernew.IsDBNull(readernew.GetOrdinal("PreviousClose")) ? null : readernew.GetDouble(readernew.GetOrdinal("PreviousClose"));
-                this.Timestamp = readernew.IsDBNull(readernew.GetOrdinal("Timestamp")) ? null : readernew.GetInt64(readernew.GetOrdinal("Timestamp"));
+                this.CurrentPrice = stock.CurrentPrice;
+                this.Change = stock.Change;
+                this.PercentageChange = stock.PercentageChange;
+                this.HighPrice = stock.HighPrice;
+                this.LowPrice = stock.LowPrice;
+                this.OpenPrice = stock.OpenPrice;
+                this.PreviousClose = stock.PreviousClose;
+                this.Timestamp = stock.Timestamp;
             }
-            
+
             return;
         }
 
