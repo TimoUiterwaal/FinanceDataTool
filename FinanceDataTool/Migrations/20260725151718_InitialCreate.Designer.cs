@@ -25,11 +25,11 @@ namespace FinanceDataTool.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("AvgPurchasePrice")
-                        .HasColumnType("REAL");
+                    b.Property<decimal>("AvgPurchasePrice")
+                        .HasColumnType("TEXT");
 
-                    b.Property<double>("Shares")
-                        .HasColumnType("REAL");
+                    b.Property<decimal>("Shares")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Symbol")
                         .IsRequired()
@@ -47,26 +47,26 @@ namespace FinanceDataTool.Migrations
                     b.Property<string>("Symbol")
                         .HasColumnType("TEXT");
 
-                    b.Property<double?>("Change")
-                        .HasColumnType("REAL");
+                    b.Property<decimal?>("Change")
+                        .HasColumnType("TEXT");
 
-                    b.Property<double?>("CurrentPrice")
-                        .HasColumnType("REAL");
+                    b.Property<decimal?>("CurrentPrice")
+                        .HasColumnType("TEXT");
 
-                    b.Property<double?>("HighPrice")
-                        .HasColumnType("REAL");
+                    b.Property<decimal?>("HighPrice")
+                        .HasColumnType("TEXT");
 
-                    b.Property<double?>("LowPrice")
-                        .HasColumnType("REAL");
+                    b.Property<decimal?>("LowPrice")
+                        .HasColumnType("TEXT");
 
-                    b.Property<double?>("OpenPrice")
-                        .HasColumnType("REAL");
+                    b.Property<decimal?>("OpenPrice")
+                        .HasColumnType("TEXT");
 
                     b.Property<double?>("PercentageChange")
                         .HasColumnType("REAL");
 
-                    b.Property<double?>("PreviousClose")
-                        .HasColumnType("REAL");
+                    b.Property<decimal?>("PreviousClose")
+                        .HasColumnType("TEXT");
 
                     b.Property<long?>("Timestamp")
                         .HasColumnType("INTEGER");
