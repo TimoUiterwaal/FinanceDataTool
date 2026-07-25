@@ -18,4 +18,8 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FinanceDataTool.Core\FinanceDataTool.Core.csproj" />
+  </ItemGroup>
+
 </Project>

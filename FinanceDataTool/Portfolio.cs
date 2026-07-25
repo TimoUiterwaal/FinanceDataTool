@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FinanceDataTool.Core;
 
 namespace FinanceDataTool
 {
@@ -40,7 +41,7 @@ namespace FinanceDataTool
                         Console.WriteLine("Invalid Input");
                         continue;
                     }
-                    var holding = new Holding { Symbol = holdingSymbolInput.ToUpper() };
+                    var holding = new Holding { Symbol = holdingSymbolInput.ToUpperInvariant() };
 
                     await holding.CreateHolding(holdingSymbolInput);
 
@@ -80,7 +81,7 @@ namespace FinanceDataTool
                         continue;
                     }
 
-                    var holding = new Holding { Symbol = holdingSymbolInput.ToUpper() };
+                    var holding = new Holding { Symbol = holdingSymbolInput.ToUpperInvariant() };
 
                     if (holding.CheckifHoldingsExists(context, holdingSymbolInput) == false)
                     {
@@ -106,7 +107,7 @@ namespace FinanceDataTool
                         continue;
                     }
 
-                    var holding = new Holding { Symbol = holdingSymbolInput.ToUpper() };
+                    var holding = new Holding { Symbol = holdingSymbolInput.ToUpperInvariant() };
 
                     if (holding.CheckifHoldingsExists(context, holdingSymbolInput) == false)
                     {

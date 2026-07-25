@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
-namespace FinanceDataTool
+namespace FinanceDataTool.Core
 {
     public class Holding
     {
@@ -22,6 +22,7 @@ namespace FinanceDataTool
         }
         public async Task CreateHolding(FinanceContext context, String Symbol)
         {
+            Symbol = Symbol.ToUpperInvariant();
             decimal usershares;
             decimal userpurchaseprice;
             Stock Userstock = new Stock { Symbol = Symbol };
@@ -66,6 +67,37 @@ namespace FinanceDataTool
             }
         }
 
+        public async Task<bool> CreateHolding(FinanceContext context, String Symbol, decimal usershares, decimal userpurchaseprice)
+        {
+            Symbol = Symbol.ToUpperInvariant();
+            Stock Userstock = new Stock { Symbol = Symbol };
+
+            if (usershares <= 0 || userpurchaseprice <= 0)
+            {
+                return false;
+            }
+
+            if (CheckifHoldingsExists(context, Symbol))
+
+            {
+                return false;
+            }
+            else
+            {
+                if (!await Userstock.UpdateStock(context, Symbol))
+                {
+                    return false;
+                }
+
+                this.Shares = usershares;
+                this.AvgPurchasePrice = userpurchaseprice;
+                context.Holdings.Add(this);
+
+                await context.SaveChangesAsync();
+                return true;
+            }
+        }
+
         public void UpdateHolding(String Symbol)
         {
             using var context = new FinanceContext();
@@ -74,7 +106,10 @@ namespace FinanceDataTool
 
         public void UpdateHolding(FinanceContext context, String Symbol)
         {
+            Symbol = Symbol.ToUpperInvariant();
             var holdingToUpdate = context.Holdings.FirstOrDefault(h => h.Symbol == Symbol);
+
+            if (holdingToUpdate == null) { return;}
 
             Console.WriteLine($"Current Shares: {holdingToUpdate.Shares}");
 
@@ -107,6 +142,21 @@ namespace FinanceDataTool
             context.SaveChanges();
 
         }
+        public bool UpdateHolding(FinanceContext context, String Symbol, decimal usershares, decimal userpurchaseprice)
+        {
+            Symbol = Symbol.ToUpperInvariant();
+            var holdingToUpdate = context.Holdings.FirstOrDefault(h => h.Symbol == Symbol);
+
+            if (holdingToUpdate == null) { return false; }
+
+            if (usershares <= 0 || userpurchaseprice <= 0) { return false; }
+
+            holdingToUpdate.AvgPurchasePrice = userpurchaseprice;
+            holdingToUpdate.Shares = usershares;
+
+            context.SaveChanges();
+            return true;
+        }
 
 
         public void AddtoHolding(String Symbol)
@@ -117,9 +167,11 @@ namespace FinanceDataTool
 
         public void AddtoHolding(FinanceContext context, String Symbol)
         {
+            Symbol = Symbol.ToUpperInvariant();
             var holdingToUpdate = context.Holdings.FirstOrDefault(h => h.Symbol == Symbol);
             decimal ashares;
             decimal aavgprice;
+            if (holdingToUpdate == null) { return; }
 
             Console.WriteLine($"Current Shares: {holdingToUpdate.Shares}");
             Console.WriteLine($"Current Avg Purchase Price: {holdingToUpdate.AvgPurchasePrice}");
@@ -158,15 +210,34 @@ namespace FinanceDataTool
 
         }
 
+        public bool AddtoHolding(FinanceContext context, String Symbol, decimal ashares, decimal aavgprice)
+        {
+            Symbol = Symbol.ToUpperInvariant();
+            var holdingToUpdate = context.Holdings.FirstOrDefault(h => h.Symbol == Symbol);
+
+            if (holdingToUpdate == null) { return false; }
+
+            if (ashares <= 0  || aavgprice <=  0)
+            {
+                return false;
+            }
+              
+            holdingToUpdate.AvgPurchasePrice = ((holdingToUpdate.Shares * holdingToUpdate.AvgPurchasePrice) + (aavgprice * ashares)) / (ashares + holdingToUpdate.Shares);
+            holdingToUpdate.Shares = ashares + holdingToUpdate.Shares;
+
+            context.SaveChanges();
+            return true;
+
+        }
 
         public bool CheckifHoldingsExists(FinanceContext context,String Symbol)
         {
-            return context.Holdings.Any(h => h.Symbol == this.Symbol);
+            Symbol = Symbol.ToUpperInvariant();
+            return context.Holdings.Any(h => h.Symbol == Symbol);
         }
 
         public static List<Holding> GetAllUpdatedHoldings(FinanceContext context)
         {
-
             return context.Holdings.ToList();
         }
     }
