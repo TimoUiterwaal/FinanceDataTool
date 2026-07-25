@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
-
+using FinanceDataTool.Core;
 #nullable disable
 
 namespace FinanceDataTool.Migrations

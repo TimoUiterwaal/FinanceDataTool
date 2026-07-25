@@ -1,4 +1,4 @@
-namespace FinanceDataTool
+namespace FinanceDataTool.Core
 {
     // Maps the existing "System" table. Named SystemInfo because a class called
     // System would collide with the System namespace.

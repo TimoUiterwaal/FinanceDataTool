@@ -24,7 +24,7 @@ public class QuoteResponse
 }
 
 
-namespace FinanceDataTool
+namespace FinanceDataTool.Core
 {
 
 
@@ -49,8 +49,9 @@ namespace FinanceDataTool
 
         public async Task<bool> UpdateStock(FinanceContext context, String Symbol)
         {
+            this.Symbol = Symbol.ToUpperInvariant();
             //Check if the timestamp in DB needs to be updated
-            var existing = await context.Stocks.FindAsync(this.Symbol);
+            var existing = await context.Stocks.FindAsync(Symbol);
 
             object? result = existing?.Timestamp;
 
@@ -61,8 +62,6 @@ namespace FinanceDataTool
 
                 if ((now-LastTimestampfromDB < 30))
                 {
-                    Console.WriteLine("Using Cached data as DB is less than 30 seconds old");
-
                     GetDBStockData(context, Symbol);
 
                     return true;
@@ -71,15 +70,15 @@ namespace FinanceDataTool
 
             try
                 {
-                    string body = await Program.client.GetStringAsync("quote?symbol=" + Symbol + "&token=" + Program.ApiKey);
+                    string body = await FinnhubApi.Client.GetStringAsync("quote?symbol=" + Symbol + "&token=" + FinnhubApi.ApiKey);
                     var quote = JsonSerializer.Deserialize<QuoteResponse>(body) ;
 
                 if (quote is null)
                      {
-                         Console.WriteLine("No quote data returned for " + Symbol);
                          return false;
                      }
 
+                    
                     this.CurrentPrice = quote.CurrentPrice ?? 0;
                     this.Change = quote.Change ?? 0;
                     this.PercentageChange = quote.PercentChange ?? 0;
@@ -93,22 +92,17 @@ namespace FinanceDataTool
                 //Console.WriteLine("TIMESTAMP FROM API: " + this.Timestamp);
                 if(Timestamp is null)
                 {
-                    Console.WriteLine("Timestamp is null, this is unexpected and Cached data has not been updated");
                         return false;
                 }
 
                 if (CurrentPrice == 0)
                 {
-                    Console.WriteLine("Current price of " + this.Symbol + " is 0, this is unexpected and cached data has not been updated");
-                    Console.WriteLine("Is it possible this ticker does not exist?");
                     return false;
                 }
 
                 }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
                 {
-                Console.WriteLine($"Request for '{Symbol}' failed: {(int?)ex.StatusCode} {ex.StatusCode}");
-
                 return false;
                 }
 
@@ -132,7 +126,7 @@ namespace FinanceDataTool
 
         public void GetDBStockData(FinanceContext context, String Symbol)
         {
-            this.Symbol = Symbol;
+            this.Symbol = Symbol.ToUpperInvariant();
 
             var stock = context.Stocks.Find(this.Symbol);
 

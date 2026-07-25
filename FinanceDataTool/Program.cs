@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using FinanceDataTool.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -10,15 +11,9 @@ namespace FinanceDataTool
 {
     internal class Program
     {
-        public static readonly HttpClient client = new()
-        {
-            BaseAddress = new Uri("https://finnhub.io/api/v1/"),
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-
         public static IConfiguration Configuration = new ConfigurationBuilder().AddUserSecrets<Program>().Build();
 
-        public static readonly string? ApiKey = Configuration["Finnhub:ApiKey"];
+       //public static readonly string? ApiKey = Configuration["Finnhub:ApiKey"];
 
         public class MarketStatusResponse
         {
@@ -33,13 +28,14 @@ namespace FinanceDataTool
 
         static async Task Main(string[] args)
         {
+            FinnhubApi.ApiKey = Configuration["Finnhub:ApiKey"];
             Database.InitializeDB();
             CheckForSecret();
             MarketStatusResponse Marketstatus = await WithSpinner(GetMarketStatus());
             Console.WriteLine("Welcome to the Finance Data Tool");
             Console.WriteLine("Market Status: " + (Marketstatus.isOpen ? "Open" : "Closed"));
 
-            var SPYIntroticker = new Stock{Symbol = "SPY"};
+            var SPYIntroticker = new FinanceDataTool.Core.Stock{Symbol = "SPY"};
 
             await WithSpinner(SPYIntroticker.UpdateStock(SPYIntroticker.Symbol));
 
@@ -76,7 +72,7 @@ namespace FinanceDataTool
 
                     var currentticker = new Stock
                     {
-                        Symbol = stocksymbolinput.ToUpper()
+                        Symbol = stocksymbolinput.ToUpperInvariant()
                     };
                     //Console.WriteLine(currentticker.Symbol);
                     Console.WriteLine("--------------------------------------------------------------------------------------------------------");
@@ -108,7 +104,7 @@ namespace FinanceDataTool
 
             try
             { 
-                string body = await client.GetStringAsync("stock/market-status?exchange=US&token=" + ApiKey);
+                string body = await FinnhubApi.Client.GetStringAsync("stock/market-status?exchange=US&token=" + FinnhubApi.ApiKey);
                 var MarketStatusResponse = JsonSerializer.Deserialize<MarketStatusResponse>(body) ?? throw new InvalidOperationException("Finnhub returned no market status data."); ;
                 using var context = new FinanceContext();
 
@@ -132,7 +128,7 @@ namespace FinanceDataTool
         }
         static void CheckForSecret()
         {
-            if (Program.ApiKey is null)
+            if (FinnhubApi.ApiKey is null)
             {
                 Console.WriteLine("API Key not found. Please set the Finnhub:ApiKey secret.");
                 Console.WriteLine("dotnet user-secrets set \"Finnhub:ApiKey\" \"ENTER SECRET HERE\"");

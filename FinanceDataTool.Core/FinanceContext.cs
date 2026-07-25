@@ -1,15 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace FinanceDataTool
+namespace FinanceDataTool.Core
 {
     public class FinanceContext : DbContext
     {
+        public FinanceContext() { }
+        public FinanceContext(DbContextOptions<FinanceContext> options) : base(options) { }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder options)
+        {
+            if (!options.IsConfigured)
+                options.UseSqlite("Data Source=stocks.db");
+        }
+
         public DbSet<Stock> Stocks => Set<Stock>();
         public DbSet<Holding> Holdings => Set<Holding>();
         public DbSet<SystemInfo> SystemInfo => Set<SystemInfo>();
 
-        protected override void OnConfiguring(DbContextOptionsBuilder options)
-            => options.UseSqlite("Data Source=stocks.db");
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

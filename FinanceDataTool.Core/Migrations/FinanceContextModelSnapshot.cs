@@ -2,19 +2,16 @@
 using FinanceDataTool;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-
+using FinanceDataTool.Core;
 #nullable disable
 
 namespace FinanceDataTool.Migrations
 {
     [DbContext(typeof(FinanceContext))]
-    [Migration("20260725151718_InitialCreate")]
-    partial class InitialCreate
+    partial class FinanceContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.15");
