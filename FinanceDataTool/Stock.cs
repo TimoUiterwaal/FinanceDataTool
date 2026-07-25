@@ -40,16 +40,20 @@ namespace FinanceDataTool
         public double? CurrentPrice { get; set; }
         public long? Timestamp { get; set; }
 
+        //using overload for main menu options which are called without context
         public async Task<bool> UpdateStock(String Symbol)
         {
-            //Check if the timestamp in DB needs to be updated
             using var context = new FinanceContext();
+            return await UpdateStock(context, Symbol);
+        }
 
+        public async Task<bool> UpdateStock(FinanceContext context, String Symbol)
+        {
+            //Check if the timestamp in DB needs to be updated
             var existing = await context.Stocks.FindAsync(this.Symbol);
 
             object? result = existing?.Timestamp;
 
-            //Console.WriteLine(result);
             if (result is not null)
             {
                 long LastTimestampfromDB = Convert.ToInt64(result);
@@ -59,7 +63,7 @@ namespace FinanceDataTool
                 {
                     Console.WriteLine("Using Cached data as DB is less than 30 seconds old");
 
-                    GetDBStockData(Symbol);
+                    GetDBStockData(context, Symbol);
 
                     return true;
                 }
@@ -68,7 +72,13 @@ namespace FinanceDataTool
             try
                 {
                     string body = await Program.client.GetStringAsync("quote?symbol=" + Symbol + "&token=" + Program.ApiKey);
-                    var quote = JsonSerializer.Deserialize<QuoteResponse>(body);
+                    var quote = JsonSerializer.Deserialize<QuoteResponse>(body) ;
+
+                if (quote is null)
+                     {
+                         Console.WriteLine("No quote data returned for " + Symbol);
+                         return false;
+                     }
 
                     this.CurrentPrice = quote.CurrentPrice ?? 0;
                     this.Change = quote.Change ?? 0;
@@ -79,12 +89,14 @@ namespace FinanceDataTool
                     this.PreviousClose = quote.PreviousClose ?? 0;
                     this.CurrentPrice = quote.CurrentPrice ?? 0;
                     this.Timestamp = quote.Timestamp;
+
                 //Console.WriteLine("TIMESTAMP FROM API: " + this.Timestamp);
-                    if(Timestamp is null)
+                if(Timestamp is null)
                 {
                     Console.WriteLine("Timestamp is null, this is unexpected and Cached data has not been updated");
                         return false;
                 }
+
                 if (CurrentPrice == 0)
                 {
                     Console.WriteLine("Current price of " + this.Symbol + " is 0, this is unexpected and cached data has not been updated");
@@ -118,11 +130,9 @@ namespace FinanceDataTool
 
         }
 
-        public void GetDBStockData(String Symbol)
+        public void GetDBStockData(FinanceContext context, String Symbol)
         {
             this.Symbol = Symbol;
-
-            using var context = new FinanceContext();
 
             var stock = context.Stocks.Find(this.Symbol);
 

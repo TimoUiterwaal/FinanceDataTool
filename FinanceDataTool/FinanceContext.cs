@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FinanceDataTool
 {
-    internal class FinanceContext : DbContext
+    public class FinanceContext : DbContext
     {
         public DbSet<Stock> Stocks => Set<Stock>();
         public DbSet<Holding> Holdings => Set<Holding>();

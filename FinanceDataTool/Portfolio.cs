@@ -20,7 +20,7 @@ namespace FinanceDataTool
                 Console.WriteLine("Add to Portfolio Holdings - (a)");
                 Console.WriteLine("Exit to main menu - (e)");
 
-                string input = Console.ReadLine();
+                string? input = Console.ReadLine();
 
                 if (string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase) || string.Equals(input, "e", StringComparison.OrdinalIgnoreCase))
                     return;
@@ -28,7 +28,7 @@ namespace FinanceDataTool
                 else if (string.Equals(input, "Add", StringComparison.OrdinalIgnoreCase) || string.Equals(input, "a", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine("Enter stock to add to portfolio");
-                    string holdingSymbolInput = Console.ReadLine();
+                    string? holdingSymbolInput = Console.ReadLine();
                     Console.WriteLine(holdingSymbolInput + " Input <-");
                     if (holdingSymbolInput is null)
                     {
@@ -43,19 +43,20 @@ namespace FinanceDataTool
                 }
                 else if (string.Equals(input, "View", StringComparison.OrdinalIgnoreCase) || string.Equals(input, "v", StringComparison.OrdinalIgnoreCase))
                 {
+                    using var context = new FinanceContext();
                     double? sum = new double();
-                    var Holdings = Holding.GetAllUpdatedHoldings();
+                    var Holdings = Holding.GetAllUpdatedHoldings(context);
+
                     foreach (var holding in Holdings)
                     {
                         var CurrentHoldingStock = new Stock() { Symbol = holding.Symbol };
-                        await CurrentHoldingStock.UpdateStock(CurrentHoldingStock.Symbol);
+                        await CurrentHoldingStock.UpdateStock(context,CurrentHoldingStock.Symbol);
 
                         Console.WriteLine($"Symbol: {holding.Symbol}, Shares: {holding.Shares}, Avg Purchase Price: {holding.AvgPurchasePrice}, Current Price: {CurrentHoldingStock.CurrentPrice}");
                         sum = sum + (CurrentHoldingStock.CurrentPrice * holding.Shares);
                     }
-                    Console.WriteLine("Current Value of all holdings : "+ sum);
 
-                    
+                    Console.WriteLine("Current Value of all holdings : "+ sum);
                     Console.WriteLine("--------------------------------------------------------------------------------------------------------");
 
                     continue;
