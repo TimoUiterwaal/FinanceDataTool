@@ -13,13 +13,13 @@ using Microsoft.EntityFrameworkCore;
 
 public class QuoteResponse
 {
-    [JsonPropertyName("c")] public double? CurrentPrice { get; set; }
-    [JsonPropertyName("d")] public double? Change { get; set; }
+    [JsonPropertyName("c")] public decimal? CurrentPrice { get; set; }
+    [JsonPropertyName("d")] public decimal? Change { get; set; }
     [JsonPropertyName("dp")] public double? PercentChange { get; set; }
-    [JsonPropertyName("h")] public double? High { get; set; }
-    [JsonPropertyName("l")] public double? Low { get; set; }
-    [JsonPropertyName("o")] public double? Open { get; set; }
-    [JsonPropertyName("pc")] public double? PreviousClose { get; set; }
+    [JsonPropertyName("h")] public decimal? High { get; set; }
+    [JsonPropertyName("l")] public decimal? Low { get; set; }
+    [JsonPropertyName("o")] public decimal? Open { get; set; }
+    [JsonPropertyName("pc")] public decimal? PreviousClose { get; set; }
     [JsonPropertyName("t")] public long? Timestamp { get; set; }
 }
 
@@ -31,13 +31,13 @@ namespace FinanceDataTool
     public class Stock
     {
         public required String Symbol { get; set; }
-        public double? Change { get; set; }
+        public decimal? Change { get; set; }
         public double? PercentageChange { get; set; }
-        public double? HighPrice { get; set; }
-        public double? LowPrice { get; set; }
-        public double? OpenPrice { get; set; }
-        public double? PreviousClose { get; set; }
-        public double? CurrentPrice { get; set; }
+        public decimal? HighPrice { get; set; }
+        public decimal? LowPrice { get; set; }
+        public decimal? OpenPrice { get; set; }
+        public decimal? PreviousClose { get; set; }
+        public decimal? CurrentPrice { get; set; }
         public long? Timestamp { get; set; }
 
         //using overload for main menu options which are called without context

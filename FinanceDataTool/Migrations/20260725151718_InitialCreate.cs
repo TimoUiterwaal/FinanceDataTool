@@ -15,13 +15,13 @@ namespace FinanceDataTool.Migrations
                 columns: table => new
                 {
                     Symbol = table.Column<string>(type: "TEXT", nullable: false),
-                    Change = table.Column<double>(type: "REAL", nullable: true),
+                    Change = table.Column<decimal>(type: "TEXT", nullable: true),
                     PercentageChange = table.Column<double>(type: "REAL", nullable: true),
-                    HighPrice = table.Column<double>(type: "REAL", nullable: true),
-                    LowPrice = table.Column<double>(type: "REAL", nullable: true),
-                    OpenPrice = table.Column<double>(type: "REAL", nullable: true),
-                    PreviousClose = table.Column<double>(type: "REAL", nullable: true),
-                    CurrentPrice = table.Column<double>(type: "REAL", nullable: true),
+                    HighPrice = table.Column<decimal>(type: "TEXT", nullable: true),
+                    LowPrice = table.Column<decimal>(type: "TEXT", nullable: true),
+                    OpenPrice = table.Column<decimal>(type: "TEXT", nullable: true),
+                    PreviousClose = table.Column<decimal>(type: "TEXT", nullable: true),
+                    CurrentPrice = table.Column<decimal>(type: "TEXT", nullable: true),
                     Timestamp = table.Column<long>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
@@ -51,8 +51,8 @@ namespace FinanceDataTool.Migrations
                     StockRecnum = table.Column<long>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Symbol = table.Column<string>(type: "TEXT", nullable: false),
-                    Shares = table.Column<double>(type: "REAL", nullable: false),
-                    AvgPurchasePrice = table.Column<double>(type: "REAL", nullable: false)
+                    Shares = table.Column<decimal>(type: "TEXT", nullable: false),
+                    AvgPurchasePrice = table.Column<decimal>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
