@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FinanceDataTool
 {
-    internal class Holding
+    public class Holding
     {
         public long StockRecnum { get; set; }
         public required string Symbol { get; set; }
@@ -15,14 +15,17 @@ namespace FinanceDataTool
         public double AvgPurchasePrice { get; set; }
 
         public double? CurrentPrice { get; set; }
+        public async Task CreateHolding( String Symbol)
+        {
+            using var context = new FinanceContext();
+            await CreateHolding (context, Symbol);
 
-        public async Task CreateHolding(String Symbol)
+        }
+        public async Task CreateHolding(FinanceContext context, String Symbol)
         {
             double usershares;
             double userpurchaseprice;
             Stock Userstock = new Stock { Symbol = Symbol };
-
-            using var context = new FinanceContext();
 
             if (CheckifHoldingsExists(context,Symbol))
 
@@ -33,7 +36,7 @@ namespace FinanceDataTool
             }
             else
             {
-                await Userstock.UpdateStock(Symbol);
+                await Userstock.UpdateStock(context,Symbol);
 
                 while (true)
                 {
@@ -66,9 +69,8 @@ namespace FinanceDataTool
             return context.Holdings.Any(h => h.Symbol == this.Symbol);
         }
 
-        public static List<Holding> GetAllUpdatedHoldings()
+        public static List<Holding> GetAllUpdatedHoldings(FinanceContext context)
         {
-            using var context = new FinanceContext();
 
             return context.Holdings.ToList();
         }

@@ -18,33 +18,28 @@ namespace FinanceDataTool
 
         public static IConfiguration Configuration = new ConfigurationBuilder().AddUserSecrets<Program>().Build();
 
-        public static readonly string ApiKey = Configuration["Finnhub:ApiKey"];
+        public static readonly string? ApiKey = Configuration["Finnhub:ApiKey"];
 
         public class MarketStatusResponse
         {
-            [JsonPropertyName("exchange")] public string exchange { get; set; }
-            [JsonPropertyName("holiday")] public string holiday { get; set; }
+            [JsonPropertyName("exchange")] public string? exchange { get; set; }
+            [JsonPropertyName("holiday")] public string? holiday { get; set; }
             [JsonPropertyName("isOpen")] public bool isOpen { get; set; }
-            [JsonPropertyName("session")] public string session { get; set; }
-            [JsonPropertyName("t")] public long Timestamp { get; set; }
-            [JsonPropertyName("timezone")] public string timezone { get; set; }
+            [JsonPropertyName("session")] public string? session { get; set; }
+            [JsonPropertyName("t")] public long? Timestamp { get; set; }
+            [JsonPropertyName("timezone")] public string? timezone { get; set; }
 
         }
 
         static async Task Main(string[] args)
         {
-
             Database.InitializeDB();
             CheckForSecret();
             MarketStatusResponse Marketstatus = await WithSpinner(GetMarketStatus());
             Console.WriteLine("Welcome to the Finance Data Tool");
             Console.WriteLine("Market Status: " + (Marketstatus.isOpen ? "Open" : "Closed"));
 
-            var SPYIntroticker = new Stock
-            {
-                Symbol = "SPY"
-
-            };
+            var SPYIntroticker = new Stock{Symbol = "SPY"};
 
             await WithSpinner(SPYIntroticker.UpdateStock(SPYIntroticker.Symbol));
 
@@ -54,7 +49,7 @@ namespace FinanceDataTool
             {
                 Console.WriteLine("Menu options - Stock (S) - Portfolio (P) - exit");
 
-                string input = Console.ReadLine();
+                string? input = Console.ReadLine();
 
 
                 if (string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase))
@@ -71,7 +66,7 @@ namespace FinanceDataTool
                 else if (string.Equals(input, "stock", StringComparison.OrdinalIgnoreCase) || string.Equals(input, "s", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine("Enter Ticker (or 'exit' to quit): ");
-                    string stocksymbolinput = Console.ReadLine();
+                    string? stocksymbolinput = Console.ReadLine();
 
                     if (stocksymbolinput is null)
                     {
@@ -114,10 +109,12 @@ namespace FinanceDataTool
             try
             { 
                 string body = await client.GetStringAsync("stock/market-status?exchange=US&token=" + ApiKey);
-                var MarketStatusResponse = JsonSerializer.Deserialize<MarketStatusResponse>(body);
+                var MarketStatusResponse = JsonSerializer.Deserialize<MarketStatusResponse>(body) ?? throw new InvalidOperationException("Finnhub returned no market status data."); ;
                 using var context = new FinanceContext();
 
+                //SystemInfo is the System table, finding the row with recnum 1
                 var systemInfo = context.SystemInfo.Find(1L);
+
                 if (systemInfo is not null)
                 {
                     systemInfo.LastTimestamp = MarketStatusResponse.Timestamp;
