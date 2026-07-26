@@ -1,11 +1,27 @@
-﻿@page "/Portfolio"
-@attribute [StreamRendering]
+﻿@page "/AdjustHoldings"
+
+@rendermode InteractiveServer
 @inject IDbContextFactory<FinanceContext> DbContextFactory
 
-<PageTitle>Portfolio</PageTitle>
 
-<h1>Portfolio</h1>
-<p class="subtitle">Current holdings with live prices.</p>
+<h3>AdjustHoldings</h3>
+<p class="subtitle">Add or remove holdings</p>
+
+Symbol | Shares | Cost 
+
+<div class="add-form">
+    <input @bind="newSymbol" placeholder="Symbol" />
+    <input type="number" step="0.0001" @bind="newShares" placeholder="Shares" />
+    <input type="number" step="0.01" @bind="newPrice" placeholder="Purchase price" />
+    <button class="btn btn-primary" @onclick="AddHolding" disabled="@isBusy">Add</button>
+
+</div>
+
+@if (message is not null)
+{
+    <p class="message">@message</p>
+}
+
 
 @if (pageholdings is null)
 {
@@ -41,12 +57,10 @@ else
                     <td class="num">@(holding.CurrentPrice?.ToString("C2") ?? "—")</td>
                     <td class="num">@(value?.ToString("C2") ?? "—")</td>
                     <td class="num @GainClass(gain)">@(gain?.ToString("C2") ?? "—")</td>
-
                 </tr>
             }
         </tbody>
         <tfoot>
-
             <tr>
                 <td colspan="4">Total</td>
                 <td class="num">@total.ToString("C2")</td>
@@ -57,12 +71,27 @@ else
     </table>
 }
 
+
 @code {
+
+    private string newSymbol = "";
+    private decimal newShares;
+    private decimal newPrice;
+    private string? message;
+    private bool isBusy;
     private List<Holding>? pageholdings;
     private decimal total;
     private decimal totalgainloss;
 
+    private static string GainClass(decimal? gain) =>
+    gain is null ? "" : gain >= 0 ? "gain" : "loss";
+
     protected override async Task OnInitializedAsync()
+    {
+        await LoadHoldings();
+    }
+
+    private async Task LoadHoldings()
     {
         using var context = await DbContextFactory.CreateDbContextAsync();
         pageholdings = await Holding.GetHoldingsWithPrices(context);
@@ -71,7 +100,41 @@ else
         totalgainloss = pageholdings.Sum(h => ((h.CurrentPrice ?? 0) - h.AvgPurchasePrice) * h.Shares);
     }
 
-    private static string GainClass(decimal? gain) =>
-        gain is null ? "" : gain >= 0 ? "gain" : "loss";
+
+    private async Task AddHolding()
+    {
+        message = null;
+
+        if (string.IsNullOrWhiteSpace(newSymbol))
+        {
+            message = "Enter a symbol.";
+            return;
+        }
+
+        isBusy = true;
+        try
+        {
+            var context = await DbContextFactory.CreateDbContextAsync();
+            var holding = new Holding { Symbol = newSymbol.ToUpperInvariant() };
+
+            if (await holding.CreateHolding(context, newSymbol, newShares, newPrice))
+            {
+                message = $"Added {newSymbol.ToUpperInvariant()}.";
+                newSymbol = "";
+                newShares = 0;
+                newPrice = 0;
+                await LoadHoldings();
+            }
+            else
+            {
+                message = "Could not add — unknown symbol, already held, or non-positive values.";
+            }
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
 
 }

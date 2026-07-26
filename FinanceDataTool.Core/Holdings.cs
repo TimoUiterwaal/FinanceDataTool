@@ -240,5 +240,22 @@ namespace FinanceDataTool.Core
         {
             return context.Holdings.ToList();
         }
+
+        public static async Task<List<Holding>> GetHoldingsWithPrices(FinanceContext context)
+        {
+            var holdings = context.Holdings.ToList();
+
+            foreach (var holding in holdings)
+            {
+                var stock = new Stock { Symbol = holding.Symbol };
+
+                if (await stock.UpdateStock(context, holding.Symbol))
+                {
+                    holding.CurrentPrice = stock.CurrentPrice;
+                }
+            }
+
+            return holdings;
+        }
     }
 }
