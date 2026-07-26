@@ -1,0 +1,42 @@
+﻿@page "/Portfolio"
+@attribute [StreamRendering]
+@inject IDbContextFactory<FinanceContext> DbContextFactory
+
+<h3>Portfolio</h3>
+
+<p>This component Displays the current holdings of the portfolio</p>
+
+@foreach (var holding in pageholdings)
+{
+	<li>@holding.Symbol</li>
+	<li>@holding.Shares</li>
+	<li>@holding.AvgPurchasePrice</li>
+	<li>@holding.CurrentPrice</li>
+
+}
+
+@code {
+
+	private List<Holding>? pageholdings;
+
+	protected override async Task OnInitializedAsync()
+	{
+		using var context = await DbContextFactory.CreateDbContextAsync();
+
+		pageholdings = Holding.GetAllUpdatedHoldings(context);
+
+		if (pageholdings is not null ){
+			foreach (var holding in pageholdings)
+			{
+
+				Stock Userstock = new Stock { Symbol = holding.Symbol };
+				await Userstock.UpdateStock(context, holding.Symbol);
+
+				if (await Userstock.UpdateStock(context, holding.Symbol))
+				{
+					holding.CurrentPrice = Userstock.CurrentPrice;
+				}
+			}
+		}
+	}
+}

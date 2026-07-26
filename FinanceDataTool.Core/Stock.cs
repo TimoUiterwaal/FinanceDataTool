@@ -70,7 +70,9 @@ namespace FinanceDataTool.Core
 
             try
                 {
+                    string testing = FinnhubApi.ApiKey;
                     string body = await FinnhubApi.Client.GetStringAsync("quote?symbol=" + Symbol + "&token=" + FinnhubApi.ApiKey);
+                    
                     var quote = JsonSerializer.Deserialize<QuoteResponse>(body) ;
 
                 if (quote is null)
