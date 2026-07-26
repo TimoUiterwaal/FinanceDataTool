@@ -1,0 +1,47 @@
+﻿.subtitle {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+}
+
+.holdings {
+    width: 100%;
+    max-width: 56rem;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.holdings th,
+.holdings td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.holdings thead th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    border-bottom: 2px solid #d1d5db;
+}
+
+.holdings .num {
+    text-align: right;
+}
+
+.holdings .symbol {
+    font-weight: 600;
+}
+
+.holdings tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.holdings tfoot td {
+    font-weight: 600;
+    border-top: 2px solid #d1d5db;
+    border-bottom: none;
+}
+
+.gain { color: #15803d; }
+.loss { color: #b91c1c; }
