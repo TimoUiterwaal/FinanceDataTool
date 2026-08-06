@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FinanceDataTool.Core
 {
-    public class Holding
+    public class Holding 
     {
         public long StockRecnum { get; set; }
         public required string Symbol { get; set; }
@@ -277,5 +277,8 @@ namespace FinanceDataTool.Core
 
             return holdings;
         }
+
     }
+
+
 }

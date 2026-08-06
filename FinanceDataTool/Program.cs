@@ -15,17 +15,6 @@ namespace FinanceDataTool
 
        //public static readonly string? ApiKey = Configuration["Finnhub:ApiKey"];
 
-        public class MarketStatusResponse
-        {
-            [JsonPropertyName("exchange")] public string? exchange { get; set; }
-            [JsonPropertyName("holiday")] public string? holiday { get; set; }
-            [JsonPropertyName("isOpen")] public bool isOpen { get; set; }
-            [JsonPropertyName("session")] public string? session { get; set; }
-            [JsonPropertyName("t")] public long? Timestamp { get; set; }
-            [JsonPropertyName("timezone")] public string? timezone { get; set; }
-
-        }
-
         static async Task Main(string[] args)
         {
             FinnhubApi.ApiKey = Configuration["Finnhub:ApiKey"];
@@ -97,7 +86,21 @@ namespace FinanceDataTool
                     continue;
                 }
             }
+
         }
+
+
+        public class MarketStatusResponse
+        {
+            [JsonPropertyName("exchange")] public string? exchange { get; set; }
+            [JsonPropertyName("holiday")] public string? holiday { get; set; }
+            [JsonPropertyName("isOpen")] public bool isOpen { get; set; }
+            [JsonPropertyName("session")] public string? session { get; set; }
+            [JsonPropertyName("t")] public long? Timestamp { get; set; }
+            [JsonPropertyName("timezone")] public string? timezone { get; set; }
+
+        }
+
 
         static async Task<MarketStatusResponse> GetMarketStatus()
         {

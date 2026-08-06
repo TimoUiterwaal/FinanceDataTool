@@ -1,14 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 
 public class QuoteResponse
@@ -68,33 +59,33 @@ namespace FinanceDataTool.Core
             }
 
             try
-                {
-                    string testing = FinnhubApi.ApiKey;
-                    string body = await FinnhubApi.Client.GetStringAsync("quote?symbol=" + Symbol + "&token=" + FinnhubApi.ApiKey);
-                    
-                    var quote = JsonSerializer.Deserialize<QuoteResponse>(body) ;
+            {
+                string testing = FinnhubApi.ApiKey;
+                string body = await FinnhubApi.Client.GetStringAsync("quote?symbol=" + Symbol + "&token=" + FinnhubApi.ApiKey);
+
+                var quote = JsonSerializer.Deserialize<QuoteResponse>(body);
 
                 if (quote is null)
-                     {
-                         return false;
-                     }
+                {
+                    return false;
+                }
 
-                    
-                    this.CurrentPrice = quote.CurrentPrice ?? 0;
-                    this.Change = quote.Change ?? 0;
-                    this.PercentageChange = quote.PercentChange ?? 0;
-                    this.HighPrice = quote.High ?? 0;
-                    this.LowPrice = quote.Low ?? 0;
-                    this.OpenPrice = quote.Open ?? 0;
-                    this.PreviousClose = quote.PreviousClose ?? 0;
-                    this.CurrentPrice = quote.CurrentPrice ?? 0;
-                    this.Timestamp = quote.Timestamp;
-                    this.LastFetchedUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+                this.CurrentPrice = quote.CurrentPrice ?? 0;
+                this.Change = quote.Change ?? 0;
+                this.PercentageChange = quote.PercentChange ?? 0;
+                this.HighPrice = quote.High ?? 0;
+                this.LowPrice = quote.Low ?? 0;
+                this.OpenPrice = quote.Open ?? 0;
+                this.PreviousClose = quote.PreviousClose ?? 0;
+                this.CurrentPrice = quote.CurrentPrice ?? 0;
+                this.Timestamp = quote.Timestamp;
+                this.LastFetchedUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
                 //Console.WriteLine("TIMESTAMP FROM API: " + this.Timestamp);
                 if (Timestamp is null)
                 {
-                        return false;
+                    return false;
                 }
 
                 if (CurrentPrice == 0)
@@ -102,15 +93,13 @@ namespace FinanceDataTool.Core
                     return false;
                 }
 
-                }
+            }
             catch (HttpRequestException)
-                {
+            {
                 return false;
-                }
+            }
 
 
-            // INSERT OR REPLACE INTO Stocks: add the row if it is new, otherwise copy
-            // this object's values onto the tracked row and let EF issue the UPDATE.
             if (existing is null)
             {
                 context.Stocks.Add(this);
