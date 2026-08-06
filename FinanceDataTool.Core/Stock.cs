@@ -39,6 +39,7 @@ namespace FinanceDataTool.Core
         public decimal? PreviousClose { get; set; }
         public decimal? CurrentPrice { get; set; }
         public long? Timestamp { get; set; }
+        public long? LastFetchedUnix { get; set; }
 
         //using overload for main menu options which are called without context
         public async Task<bool> UpdateStock(String Symbol)
@@ -51,19 +52,17 @@ namespace FinanceDataTool.Core
         {
             this.Symbol = Symbol.ToUpperInvariant();
             //Check if the timestamp in DB needs to be updated
-            var existing = await context.Stocks.FindAsync(Symbol);
+            var existing = await context.Stocks.FindAsync(this.Symbol);
 
             object? result = existing?.Timestamp;
 
             if (result is not null)
             {
-                long LastTimestampfromDB = Convert.ToInt64(result);
-                long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-                if ((now-LastTimestampfromDB < 30))
+                if (existing?.LastFetchedUnix is long fetched &&
+                    DateTimeOffset.UtcNow.ToUnixTimeSeconds() - fetched < 30)
                 {
-                    GetDBStockData(context, Symbol);
-
+                    GetDBStockData(context, this.Symbol);
                     return true;
                 }
             }
@@ -90,9 +89,10 @@ namespace FinanceDataTool.Core
                     this.PreviousClose = quote.PreviousClose ?? 0;
                     this.CurrentPrice = quote.CurrentPrice ?? 0;
                     this.Timestamp = quote.Timestamp;
+                    this.LastFetchedUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
                 //Console.WriteLine("TIMESTAMP FROM API: " + this.Timestamp);
-                if(Timestamp is null)
+                if (Timestamp is null)
                 {
                         return false;
                 }

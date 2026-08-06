@@ -210,7 +210,7 @@ namespace FinanceDataTool.Core
 
         }
 
-        public bool AddtoHolding(FinanceContext context, String Symbol, decimal ashares, decimal aavgprice)
+        public static bool AddtoHolding(FinanceContext context, string Symbol, decimal ashares, decimal aavgprice)
         {
             Symbol = Symbol.ToUpperInvariant();
             var holdingToUpdate = context.Holdings.FirstOrDefault(h => h.Symbol == Symbol);
@@ -226,6 +226,26 @@ namespace FinanceDataTool.Core
             holdingToUpdate.Shares = ashares + holdingToUpdate.Shares;
 
             context.SaveChanges();
+            return true;
+
+        }
+
+        public static void Removeholding(string Symbol)
+        {
+            using var context = new FinanceContext();
+            Removeholding(context, Symbol);
+
+        }
+
+        public static bool Removeholding(FinanceContext context, string Symbol)
+        {
+            Symbol = Symbol.ToUpperInvariant();
+            Holding? holdingToUpdate = context.Holdings.FirstOrDefault(h => h.Symbol == Symbol);
+
+            if (holdingToUpdate == null) { return false; }
+            context.Remove(holdingToUpdate);
+            context.SaveChanges();
+
             return true;
 
         }

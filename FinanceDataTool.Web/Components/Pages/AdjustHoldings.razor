@@ -17,6 +17,27 @@ Symbol | Shares | Cost
 
 </div>
 
+
+Symbol to add on to | Additional Shares | Cost of new shares
+
+
+<div class="add-form">
+    <input @bind="addtoSymbol" placeholder="Symbol" />
+    <input type="number" step="0.0001" @bind="addtoShares" placeholder="Shares" />
+    <input type="number" step="0.01" @bind="addtoPrice" placeholder="Purchase price" />
+    <button class="btn btn-primary" @onclick="ButtonClickAddtoHolding" disabled="@isBusy">Add in addition to</button>
+
+</div>
+
+Symbol to add on to | Additional Shares | Cost of new shares
+
+
+<div class="add-form">
+    <input @bind="removesymbol" placeholder="Symbol" />
+    <button class="btn btn-primary" @onclick="ButtonClickRemoveHolding" disabled="@isBusy">Remove Holding</button>
+
+</div>
+
 @if (message is not null)
 {
     <p class="message">@message</p>
@@ -82,6 +103,10 @@ else
     private List<Holding>? pageholdings;
     private decimal total;
     private decimal totalgainloss;
+    private string addtoSymbol = "";
+    private decimal addtoShares;
+    private decimal addtoPrice;
+    private string removesymbol;
 
     private static string GainClass(decimal? gain) =>
     gain is null ? "" : gain >= 0 ? "gain" : "loss";
@@ -136,5 +161,69 @@ else
         }
     }
 
+    private async Task ButtonClickAddtoHolding()
+    {
+        message = null;
+
+        if (string.IsNullOrWhiteSpace(addtoSymbol))
+        {
+            message = "Enter a symbol.";
+            return;
+        }
+
+        isBusy = true;
+        try
+        {
+            var context = await DbContextFactory.CreateDbContextAsync();
+
+            if (Holding.AddtoHolding(context, addtoSymbol, addtoShares, addtoPrice))
+            {
+                message = $"Added to {addtoSymbol.ToUpperInvariant()}.";
+                addtoSymbol = "";
+                addtoShares = 0;
+                addtoPrice = 0;
+                await LoadHoldings();
+            }
+            else
+            {
+                message = "Could not add — Symbol not already held, or non-positive values.";
+            }
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task ButtonClickRemoveHolding()
+    {
+        message = null;
+
+        if (string.IsNullOrWhiteSpace(removesymbol))
+        {
+            message = "Enter a symbol.";
+            return;
+        }
+
+        isBusy = true;
+        try
+        {
+            var context = await DbContextFactory.CreateDbContextAsync();
+
+            if (Holding.Removeholding(context, removesymbol))
+            {
+                message = $"Removed {removesymbol.ToUpperInvariant()}.";
+                await LoadHoldings();
+            }
+            else
+            {
+                message = "Could not remove — Symbol not already held, or non-positive values.";
+            }
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
 
 }
